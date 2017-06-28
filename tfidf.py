@@ -1,11 +1,23 @@
-from sklearn.feature_extraction.text import TfidfVectorizer
-import nltk
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from nltk.corpus import stopwords
 
-#Data
-que1 = "how can I go form Pune to Mumbai"
-que2 = "How is the weather in Pune today"
+train_set = ["The sky is blue.", "The sun is bright."] #Documents
+test_set = ["The sun in the sky is bright."] #Query
+stopWords = stopwords.words('english')
 
-ans1 = "Get a cab"
-ans2 = "Check Google Now"
+vectorizer = CountVectorizer(stop_words = stopWords)
+transformer = TfidfTransformer()
 
-vect = TfidfVectorizer(stop_words='english', min_df=1)
+trainVectorizerArray = vectorizer.fit_transform(train_set).toarray()
+testVectorizerArray = vectorizer.transform(test_set).toarray()
+print 'Fit Vectorizer to train set', trainVectorizerArray
+print 'Transform Vectorizer to test set', testVectorizerArray
+
+transformer.fit(trainVectorizerArray)
+print transformer.transform(trainVectorizerArray).toarray()
+
+transformer.fit(testVectorizerArray)
+
+tfidf = transformer.transform(testVectorizerArray)
+print tfidf.todense()
