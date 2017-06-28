@@ -1,6 +1,7 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 import nltk
 
+#Data
 que1 = "how can I go form Pune to Mumbai"
 que2 = "How is the weather in Pune today"
 
