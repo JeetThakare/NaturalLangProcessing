@@ -6,18 +6,15 @@ import cPickle
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.svm import SVC, LinearSVC
 from sklearn.metrics import classification_report, f1_score, accuracy_score, confusion_matrix
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import learning_curve
 
 
-# def split_into_tokens(message):
-#     message = unicode(message, 'utf8')
-#     return TextBlob(message).words
+def split_into_tokens(message):
+    message = unicode(message, 'utf8')
+    return TextBlob(message).words
 
 
 def split_into_lemmas(message):
@@ -28,11 +25,7 @@ def split_into_lemmas(message):
 
 messages = pd.read_csv('./smsspamcollection/SMSSpamCollection', sep='\t', quoting=csv.QUOTE_NONE,
                        names=["label", "message"])
-# print messages
 
-# messages['length'] = messages['message'].map(lambda text: len(text))
-
-# messages = pd.DataFrame(messages.message.apply(split_into_lemmas))
 
 vectorizer = CountVectorizer(analyzer=split_into_lemmas)
 messages_Vect = vectorizer.fit_transform(messages.message)
@@ -42,14 +35,10 @@ tfidf_transformer = TfidfTransformer()
 messages_tfidf = tfidf_transformer.fit_transform(messages_Vect)
 
 
-# print(messages.head())
-
-# print tfidf_transformer.idf_[vectorizer.vocabulary_['hello']]
-
 spam_detector = MultinomialNB().fit(messages_tfidf, messages['label'])
 
 pipeline = Pipeline([
-    ('vec', CountVectorizer(analyzer=split_into_lemmas)),  # strings to token integer counts
+    ('vec', CountVectorizer()),  # strings to token integer counts
     ('tfidf', TfidfTransformer()),  # integer counts to weighted TF-IDF scores
     ('classifier', MultinomialNB()),  # train on TF-IDF vectors w/ Naive Bayes classifier
 ])
@@ -65,3 +54,24 @@ scores = cross_val_score(pipeline,  # steps to convert raw messages into models
                          n_jobs=-1,  # -1 = use all cores = faster
                          )
 # print scores
+
+params = {
+    'tfidf__use_idf': (True, False),
+}
+
+grid = GridSearchCV(
+    pipeline,  # pipeline from above
+    params,  # parameters to tune via cross validation
+    refit=True,  # fit using all available data at the end, on the best found param combination
+    n_jobs=-1,  # number of cores to use for parallelization; -1 for "all cores"
+    scoring='accuracy',  # what score are we optimizing?
+    # cv=StratifiedKFold(label_train),  # what type of cross validation to use
+)
+
+nb_detector = grid.fit(msg_train, label_train)
+# print nb_detector.grid_scores_
+
+print(nb_detector.predict(["Hi How are you"])[0])
+
+with open('sms_spam_detector.pkl', 'wb') as fout:
+    cPickle.dump(nb_detector, fout)
