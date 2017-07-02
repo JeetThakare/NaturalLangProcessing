@@ -65,5 +65,3 @@ scores = cross_val_score(pipeline,  # steps to convert raw messages into models
                          n_jobs=-1,  # -1 = use all cores = faster
                          )
 # print scores
-
-print(spam_detector.predict("hi, how are you"))
